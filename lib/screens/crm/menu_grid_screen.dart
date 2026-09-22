@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/auth_provider.dart';
-import '../auth/login_screen.dart';
 
 // TODO: implementar dashboard completo — Feature [2] del MVP
 class MenuGridScreen extends ConsumerWidget {
