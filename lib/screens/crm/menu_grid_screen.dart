@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/auth_provider.dart';
@@ -6,6 +6,8 @@ import '../../providers/categorias_provider.dart';
 import '../../providers/productos_provider.dart';
 import 'categorias_screen.dart';
 import 'productos_screen.dart';
+import 'qr/qr_generator_screen.dart';
+import 'menu_public_screen.dart';
 
 class MenuGridScreen extends ConsumerWidget {
   const MenuGridScreen({super.key});
@@ -241,10 +243,8 @@ class MenuGridScreen extends ConsumerWidget {
                         titulo: 'Código QR para Mesas',
                         subtitulo: 'Descargá e imprimí el QR para que tus clientes escaneen',
                         onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Próximo paso: Feature [6] - Generador de QR'),
-                            ),
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const QRGeneratorScreen()),
                           );
                         },
                       ),
@@ -255,10 +255,8 @@ class MenuGridScreen extends ConsumerWidget {
                         titulo: 'Ver Menú Público',
                         subtitulo: 'Vista previa en tiempo real de cómo lo ven tus clientes',
                         onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Próximo paso: Feature [7] - Menú Público'),
-                            ),
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const MenuPublicScreen()),
                           );
                         },
                       ),
