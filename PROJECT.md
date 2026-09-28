@@ -1,4 +1,4 @@
-﻿# Project.md — App de Menú Digital (Flutter + Firebase)
+﻿# PROJECT.md — App de Menú Digital (Flutter + Firebase)
 
 Este archivo es la fuente de verdad del proyecto para cualquier agente (Antigravity u otro) que trabaje en este repo.
 **Antes de generar código, leé este archivo completo.**
