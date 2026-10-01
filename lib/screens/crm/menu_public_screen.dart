@@ -6,6 +6,7 @@ import '../../models/categoria.dart';
 import '../../models/producto.dart';
 import '../../providers/categorias_provider.dart';
 import '../../providers/productos_provider.dart';
+import '../../utils/formato.dart';
 
 class MenuPublicScreen extends ConsumerWidget {
   const MenuPublicScreen({super.key});
@@ -75,7 +76,7 @@ class MenuPublicScreen extends ConsumerWidget {
                                   children: [
                                     Text(prod.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
                                     const SizedBox(height: 4),
-                                    Text('\${(prod.precioEnCentavos / 100).toStringAsFixed(2)}',
+                                    Text(formatPrecio(prod.precioEnCentavos),
                                         style: const TextStyle(color: Colors.green)),
                                   ],
                                 ),
@@ -90,6 +91,34 @@ class MenuPublicScreen extends ConsumerWidget {
                 );
               },
             ),
+      bottomNavigationBar: Container(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Menú digital creado con MenuQR',
+              style: TextStyle(fontSize: 12, color: Colors.black54),
+            ),
+            const SizedBox(height: 4),
+            InkWell(
+              onTap: () {
+                Navigator.of(context).pushNamed('/registro');
+              },
+              child: Text(
+                'Creá el tuyo gratis acá',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

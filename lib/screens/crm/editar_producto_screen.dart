@@ -1,4 +1,4 @@
-﻿import 'dart:typed_data';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -308,12 +308,30 @@ class _EditarProductoScreenState extends ConsumerState<EditarProductoScreen> {
                               loading: () => const Center(child: LinearProgressIndicator()),
                               error: (_, __) => const Text('Error al cargar categorías'),
                               data: (categorias) {
+                                if (categorias.isEmpty) {
+                                  return OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      side: const BorderSide(color: Colors.redAccent),
+                                      foregroundColor: Colors.redAccent,
+                                    ),
+                                    icon: const Icon(Icons.warning_amber_rounded),
+                                    label: const Text('Creá una categoría primero'),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Andá a "Categorías" y agregá al menos una antes de crear productos.')),
+                                      );
+                                    },
+                                  );
+                                }
+
                                 if (_categoriaSeleccionadaId == null && categorias.isNotEmpty) {
                                   _categoriaSeleccionadaId = categorias.first.id;
                                 }
 
                                 return DropdownButtonFormField<String>(
-                                  initialValue: categorias.any((c) => c.id == _categoriaSeleccionadaId)
+                                  value: categorias.any((c) => c.id == _categoriaSeleccionadaId)
                                       ? _categoriaSeleccionadaId
                                       : null,
                                   decoration: const InputDecoration(

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 class StorageService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
@@ -14,6 +15,18 @@ class StorageService {
     required Uint8List bytes,
   }) async {
     try {
+      // Compresión obligatoria según AGENTS.md
+      debugPrint('Comprimiendo imagen original de ${bytes.lengthInBytes} bytes...');
+      final compressedBytes = await FlutterImageCompress.compressWithList(
+        bytes,
+        minWidth: 800,
+        minHeight: 800,
+        quality: 75,
+      );
+      
+      final finalBytes = compressedBytes;
+      debugPrint('Imagen comprimida a ${finalBytes.lengthInBytes} bytes.');
+
       final ref = _storage.ref().child('usuarios/$uid/productos/$productoId.jpg');
       final metadata = SettableMetadata(
         contentType: 'image/jpeg',
@@ -21,7 +34,7 @@ class StorageService {
       );
 
       final uploadTask = await ref
-          .putData(bytes, metadata)
+          .putData(finalBytes, metadata)
           .timeout(const Duration(milliseconds: 2500));
       final url = await uploadTask.ref
           .getDownloadURL()
@@ -29,7 +42,19 @@ class StorageService {
       return url;
     } catch (e) {
       debugPrint('Firebase Storage no disponible o tardó demasiado: $e. Usando compresión Base64.');
-      final base64String = base64Encode(bytes);
+      
+      // Asegurar que usamos bytes comprimidos si están disponibles, sino los originales
+      Uint8List targetBytes = bytes;
+      try {
+        targetBytes = await FlutterImageCompress.compressWithList(
+          bytes,
+          minWidth: 800,
+          minHeight: 800,
+          quality: 75,
+        );
+      } catch (_) {}
+
+      final base64String = base64Encode(targetBytes);
       return 'data:image/jpeg;base64,$base64String';
     }
   }

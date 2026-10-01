@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/producto.dart';
@@ -372,7 +372,7 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
                                             children: [
                                               Switch(
                                                 value: prod.disponible,
-                                                activeThumbColor: const Color(0xFF2E7D32),
+                                                activeColor: const Color(0xFF2E7D32),
                                                 onChanged: _procesando
                                                     ? null
                                                     : (val) => _toggleDisponible(prod, val),
