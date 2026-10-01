@@ -46,10 +46,9 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
 
     setState(() => _procesando = true);
     try {
-      await ref.read(firestoreServiceProvider).eliminarProducto(
-            uid: uid,
-            productoId: producto.id,
-          );
+      await ref
+          .read(firestoreServiceProvider)
+          .eliminarProducto(uid: uid, productoId: producto.id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Producto "${producto.nombre}" borrado')),
@@ -74,7 +73,9 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
     if (uid == null) return;
 
     try {
-      await ref.read(firestoreServiceProvider).toggleDisponibleProducto(
+      await ref
+          .read(firestoreServiceProvider)
+          .toggleDisponibleProducto(
             uid: uid,
             productoId: producto.id,
             disponible: valor,
@@ -114,9 +115,7 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAF8),
-      appBar: AppBar(
-        title: const Text('Productos y Precios'),
-      ),
+      appBar: AppBar(title: const Text('Productos y Precios')),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 850),
@@ -187,7 +186,9 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
                               onSelected: (_) {
                                 setState(() {
                                   _filtroCategoriaId =
-                                      _filtroCategoriaId == cat.id ? null : cat.id;
+                                      _filtroCategoriaId == cat.id
+                                      ? null
+                                      : cat.id;
                                 });
                               },
                             ),
@@ -204,17 +205,23 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
               // Listado de Productos
               Expanded(
                 child: productosAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (e, _) => Center(
                     child: Padding(
                       padding: const EdgeInsets.all(24.0),
-                      child: Text('Error al cargar productos: $e', style: const TextStyle(color: Colors.red)),
+                      child: Text(
+                        'Error al cargar productos: $e',
+                        style: const TextStyle(color: Colors.red),
+                      ),
                     ),
                   ),
                   data: (productos) {
                     final productosFiltrados = _filtroCategoriaId == null
                         ? productos
-                        : productos.where((p) => p.categoriaId == _filtroCategoriaId).toList();
+                        : productos
+                              .where((p) => p.categoriaId == _filtroCategoriaId)
+                              .toList();
 
                     if (productosFiltrados.isEmpty) {
                       return Center(
@@ -244,205 +251,288 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
                                 textAlign: TextAlign.center,
                                 style: TextStyle(color: Colors.grey.shade600),
                               ),
+                              const SizedBox(height: 24),
+                              if (_filtroCategoriaId == null)
+                                FilledButton.icon(
+                                  style: FilledButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                                    backgroundColor: const Color(0xFF2E7D32),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  icon: const Icon(Icons.add_circle_outline),
+                                  label: const Text(
+                                    'CREAR MI PRIMER PLATO',
+                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => const EditarProductoScreen(),
+                                      ),
+                                    );
+                                  },
+                                ),
                             ],
                           ),
                         ),
                       );
                     }
 
-                    return ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    return ReorderableListView.builder(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                       itemCount: productosFiltrados.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 14),
+                      onReorder: (oldIndex, newIndex) {
+                        setState(() {
+                          if (newIndex > oldIndex) {
+                            newIndex -= 1;
+                          }
+                          final item = productosFiltrados.removeAt(oldIndex);
+                          productosFiltrados.insert(newIndex, item);
+                        });
+
+                        final uid = ref
+                            .read(authServiceProvider)
+                            .usuarioActual
+                            ?.uid;
+                        if (uid != null) {
+                          ref
+                              .read(firestoreServiceProvider)
+                              .reordenarProductos(
+                                uid: uid,
+                                productos: productosFiltrados,
+                              );
+                        }
+                      },
                       itemBuilder: (context, index) {
                         final prod = productosFiltrados[index];
-                        final nombreCat = categoriasMap[prod.categoriaId] ?? 'Sin categoría';
+                        final nombreCat =
+                            categoriasMap[prod.categoriaId] ?? 'Sin categoría';
 
-                        return Card(
-                          elevation: 0,
-                          color: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            side: BorderSide(color: Colors.grey.shade200),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(14.0),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Foto del producto (Izquierda)
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Container(
-                                    width: 100,
-                                    height: 100,
-                                    color: Colors.grey.shade100,
-                                    child: prod.fotoUrl.isNotEmpty
-                                        ? Image.network(
-                                            prod.fotoUrl,
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (_, __, ___) => Icon(
-                                              Icons.image_not_supported_outlined,
-                                              size: 32,
-                                              color: Colors.grey.shade400,
-                                            ),
-                                          )
-                                        : Icon(
-                                            Icons.restaurant,
-                                            size: 36,
-                                            color: Colors.grey.shade400,
-                                          ),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-
-                                // Datos del producto (Centro)
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              prod.nombre,
-                                              style: TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                                color: prod.disponible
-                                                    ? Colors.black87
-                                                    : Colors.grey,
+                        return Container(
+                          key: ValueKey(prod.id),
+                          margin: const EdgeInsets.only(bottom: 14),
+                          child: Card(
+                            elevation: 0,
+                            color: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              side: BorderSide(color: Colors.grey.shade200),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(14.0),
+                              child: Opacity(
+                                opacity: prod.disponible ? 1.0 : 0.6,
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Foto del producto (Izquierda)
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Container(
+                                        width: 100,
+                                        height: 100,
+                                        color: Colors.grey.shade100,
+                                        child: prod.fotoUrl.isNotEmpty
+                                            ? Image.network(
+                                                prod.fotoUrl,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (_, __, ___) => Icon(
+                                                  Icons
+                                                      .image_not_supported_outlined,
+                                                  size: 32,
+                                                  color: Colors.grey.shade400,
+                                                ),
+                                              )
+                                            : Icon(
+                                                Icons.restaurant,
+                                                size: 36,
+                                                color: Colors.grey.shade400,
                                               ),
-                                            ),
-                                          ),
-                                          Text(
-                                            formatPrecio(prod.precioEnCentavos),
-                                            style: const TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w800,
-                                              color: Color(0xFF2E7D32),
-                                            ),
-                                          ),
-                                        ],
                                       ),
-                                      const SizedBox(height: 4),
+                                    ),
+                                    const SizedBox(width: 16),
 
-                                      // Categoría badge
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.green.shade50,
-                                          borderRadius: BorderRadius.circular(6),
-                                        ),
-                                        child: Text(
-                                          nombreCat,
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.green.shade800,
-                                          ),
-                                        ),
-                                      ),
-
-                                      const SizedBox(height: 6),
-
-                                      // Descripción
-                                      if (prod.descripcion.isNotEmpty)
-                                        Text(
-                                          prod.descripcion,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            color: Colors.grey.shade600,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-
-                                      const SizedBox(height: 10),
-
-                                      // Fila de acciones (EDITAR / BORRAR / DISPONIBLE)
-                                      Row(
+                                    // Datos del producto (Centro)
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Row(
-                                            mainAxisSize: MainAxisSize.min,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
-                                              Switch(
-                                                value: prod.disponible,
-                                                activeColor: const Color(0xFF2E7D32),
-                                                onChanged: _procesando
-                                                    ? null
-                                                    : (val) => _toggleDisponible(prod, val),
+                                              Expanded(
+                                                child: Text(
+                                                  prod.nombre,
+                                                  style: TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: prod.disponible
+                                                        ? Colors.black87
+                                                        : Colors.grey,
+                                                  ),
+                                                ),
                                               ),
                                               Text(
-                                                prod.disponible ? 'Disponible' : 'Agotado',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: prod.disponible
-                                                      ? Colors.green.shade700
-                                                      : Colors.grey,
-                                                  fontWeight: FontWeight.w600,
+                                                formatPrecio(
+                                                  prod.precioEnCentavos,
+                                                ),
+                                                style: const TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: Color(0xFF2E7D32),
                                                 ),
                                               ),
                                             ],
                                           ),
-                                          const Spacer(),
-                                          OutlinedButton(
-                                            style: OutlinedButton.styleFrom(
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 14,
-                                                vertical: 8,
-                                              ),
+                                          const SizedBox(height: 4),
+
+                                          // Categoría badge
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 2,
                                             ),
-                                            onPressed: _procesando
-                                                ? null
-                                                : () {
-                                                    Navigator.of(context).push(
-                                                      MaterialPageRoute(
-                                                        builder: (_) => EditarProductoScreen(
-                                                          producto: prod,
-                                                        ),
-                                                      ),
-                                                    );
-                                                  },
-                                            child: const Text(
-                                              'EDITAR',
+                                            decoration: BoxDecoration(
+                                              color: Colors.green.shade50,
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              nombreCat,
                                               style: TextStyle(
+                                                fontSize: 11,
                                                 fontWeight: FontWeight.bold,
-                                                fontSize: 12,
+                                                color: Colors.green.shade800,
                                               ),
                                             ),
                                           ),
-                                          const SizedBox(width: 8),
-                                          OutlinedButton(
-                                            style: OutlinedButton.styleFrom(
-                                              foregroundColor: Colors.red.shade700,
-                                              side: BorderSide(color: Colors.red.shade200),
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 14,
-                                                vertical: 8,
-                                              ),
-                                            ),
-                                            onPressed: _procesando
-                                                ? null
-                                                : () => _eliminarProducto(prod),
-                                            child: const Text(
-                                              'BORRAR',
+
+                                          const SizedBox(height: 6),
+
+                                          // Descripción
+                                          if (prod.descripcion.isNotEmpty)
+                                            Text(
+                                              prod.descripcion,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
                                               style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 12,
+                                                color: Colors.grey.shade600,
+                                                fontSize: 13,
                                               ),
                                             ),
+
+                                          const SizedBox(height: 10),
+
+                                          // Fila de acciones (EDITAR / BORRAR / DISPONIBLE)
+                                          Row(
+                                            children: [
+                                              Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Switch(
+                                                    value: prod.disponible,
+                                                    activeColor: const Color(
+                                                      0xFF2E7D32,
+                                                    ),
+                                                    onChanged: _procesando
+                                                        ? null
+                                                        : (val) =>
+                                                              _toggleDisponible(
+                                                                prod,
+                                                                val,
+                                                              ),
+                                                  ),
+                                                  Text(
+                                                    prod.disponible
+                                                        ? 'Disponible'
+                                                        : 'Agotado',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: prod.disponible
+                                                          ? Colors
+                                                                .green
+                                                                .shade700
+                                                          : Colors.grey,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const Spacer(),
+                                              OutlinedButton(
+                                                style: OutlinedButton.styleFrom(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 14,
+                                                        vertical: 8,
+                                                      ),
+                                                ),
+                                                onPressed: _procesando
+                                                    ? null
+                                                    : () {
+                                                        Navigator.of(
+                                                          context,
+                                                        ).push(
+                                                          MaterialPageRoute(
+                                                            builder: (_) =>
+                                                                EditarProductoScreen(
+                                                                  producto:
+                                                                      prod,
+                                                                ),
+                                                          ),
+                                                        );
+                                                      },
+                                                child: const Text(
+                                                  'EDITAR',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              OutlinedButton(
+                                                style: OutlinedButton.styleFrom(
+                                                  foregroundColor:
+                                                      Colors.red.shade700,
+                                                  side: BorderSide(
+                                                    color: Colors.red.shade200,
+                                                  ),
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 14,
+                                                        vertical: 8,
+                                                      ),
+                                                ),
+                                                onPressed: _procesando
+                                                    ? null
+                                                    : () => _eliminarProducto(
+                                                        prod,
+                                                      ),
+                                                child: const Text(
+                                                  'BORRAR',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
                           ),
                         );

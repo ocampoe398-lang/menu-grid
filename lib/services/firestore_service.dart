@@ -1,4 +1,4 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/categoria.dart';
 import '../models/producto.dart';
 
@@ -176,5 +176,18 @@ class FirestoreService {
     required String productoId,
   }) async {
     await _productosRef(uid).doc(productoId).delete();
+  }
+
+  /// Reordena una lista de productos actualizando su campo 'orden' en batch.
+  Future<void> reordenarProductos({
+    required String uid,
+    required List<Producto> productos,
+  }) async {
+    final batch = _firestore.batch();
+    for (int i = 0; i < productos.length; i++) {
+      final docRef = _productosRef(uid).doc(productos[i].id);
+      batch.update(docRef, {'orden': i});
+    }
+    await batch.commit();
   }
 }
